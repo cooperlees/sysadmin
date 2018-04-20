@@ -1,0 +1,85 @@
+#!/bin/bash
+
+########################################
+# Cooper Lees - cooper@cheerscunt.com
+# Last Updated: 20180419
+########################################
+
+CMD="w"
+PASSWORD=""
+SSHPASS=/bin/sshpass
+USER="root"
+VER="0.69"
+VERBOSE=0
+
+function printHelp
+{
+  echo "
+    $0 Version $VER - Cooper Lees (cooper@cheerscunt.com)
+    $0 [-hvV] -c CMD -H 'HOSTS'
+      -c CMD (The command you wish to run)
+      -H Space seperated hostnames / IPs
+      -p Prompt for a password
+      -u User to SSH as
+
+      -h Help (This output)
+      -v Verbose Output (debug info)
+      -V Version (Display version number)
+  "
+}
+
+########
+# MAIN #
+########
+
+# Handle Args
+while getopts "c:H:hpvV" o
+do
+  case $o in
+  c)  CMD=$OPTARG;
+      ;;
+  H)  HOSTS=$OPTARG;
+      ;;
+  h)  printHelp;
+      exit
+      ;;
+  p)  echo -n "Password:";
+      read -s PASSWORD;
+      ;;
+  u)	USER=$OPTARG;
+      ;;
+  v)	VERBOSE=1;
+      ;;
+  V)  echo "$0 Version $VER - Cooper Lees (cooper@cheerscunt.com)"
+      ;;
+  *)  echo "!--> Exiting ...";
+      exit 1;
+      ;;
+  esac
+done
+
+if [ "$HOSTS" == "" ]; then
+  echo "Need hosts to do stuff on mate ..."
+  exit 69
+fi
+
+for host in $HOSTS
+do
+  if [ $VERBOSE -eq 1 ]; then
+    echo -e "\n-- $host:"
+  fi
+
+  if [ -x ${SSHPASS} ] && [ "${PASSWORD}" != "" ]; then
+    ${SSHPASS} -p "${PASSWORD}" ssh ${USER}@${host} "${CMD}"
+  else
+    ssh ${USER}@${host} "${CMD}"
+  fi
+  retVal=$?
+  if [ $retVal -ne 0 ]; then
+    echo -e " --> '${CMD}' on ${host} returned $retVal.\n"
+  fi
+
+  if [ $VERBOSE -eq 1 ]; then
+    echo "--"
+  fi
+done
